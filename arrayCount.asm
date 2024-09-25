@@ -1,7 +1,7 @@
 .data 
 
 arrayA:
-	.word 11, 0, 31, 22, 9, 17, 6, 9
+	.word 1, 2, 3, 4, 5, 6, 7, 8
 
 count:
 	.word 999 # 999 is a dummy val
