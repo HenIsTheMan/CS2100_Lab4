@@ -54,7 +54,7 @@ main:
 LoopStart0:
 	beq $t5, $t4, LoopEnd0
 
-	lw $t6, 0($t5)				# $t6 --> current element of copy of arrayA in Loop0
+	lw $t6, 0($t5)				# $t6 --> current element of arrayA copy
 
 	and $t6, $t6, $t9			# Bitmasking to get remainder of division by pow of 2
 
@@ -109,7 +109,9 @@ LoopEnd0:
 LoopStart1:
 	beq $t5, $t4, LoopEnd1
 
-	beq $t5, $t3, LoopUpdate1	# Do not print if -ve val
+	lw $t6, 0($t5)				# $t6 --> current element of arrayA copy
+
+	beq $t6, $t3, LoopUpdate1	# Do not print if -ve val
 
 	li $v0, 1					# For print_int service
 	addi $a0, $t5, 0
