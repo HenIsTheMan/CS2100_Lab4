@@ -27,9 +27,9 @@ substr3:
 substr4:
 	.asciiz ")."
 
-zeroMultiplesSubstr0:
+noMultiplesSubstr0:
 	.asciiz "Zero multiples of "
-zeroMultiplesSubstr1:
+noMultiplesSubstr1:
 	.asciiz "."
 
 .text
@@ -49,14 +49,14 @@ main:
 	addi $t3, $0, -1			# $t3 --> -ve val to replace non-multiples of X (since arrayA cannot contain -ve vals on init)
 	addi $t4, $t0, 28			# $t4 --> arrayA + (arrayA length - 1) * 4 (Final address for traversal by ptr)
 	add $t5, $t0, $0			# $t5 --> copy of arrayA for Loop0
-	addi $t9, $t1, -1			# $t9 --> bitmask to get remainder of division by pow of 2
+	addi $s0, $t1, -1			# $s0 --> bitmask to get remainder of division by pow of 2
 
 LoopStart0:
 	beq $t5, $t4, LoopEnd0
 
 	lw $t6, 0($t5)				# $t6 --> current element of arrayA copy
 
-	and $t6, $t6, $t9			# Bitmasking to get remainder of division by pow of 2
+	and $t6, $t6, $s0			# Bitmasking to get remainder of division by pow of 2
 
 	beq $t6, $0, IncrementCount	# No need to set -ve val if $t6 is multiple of X
 
@@ -76,7 +76,7 @@ LoopEnd0:
 	# code for printing result
 	li $v0, 4					# For print_string service
 
-	beq $t8, $0, ZeroMultiples	# Accts for 0
+	beq $t8, $0, NoMultiples	# Accts for 0
 
 	la $t2, countStrArr			# $t2 --> countStrArr
 
@@ -88,7 +88,7 @@ LoopEnd0:
 
 	add $t2, $t2, $t7			# Offset countStrArr for correct countStr to be printed
 
-	## Logic for printing non-0 multiples
+	## Printing of 1 or more multiples
 	addi $a0, $t2, 0
 	syscall						# "One" - "Eight"
 
@@ -105,6 +105,7 @@ LoopEnd0:
 
 	### Printing of 1 or more substr2 and substr3
 	add $t5, $t0, $0			# $t5 --> copy of arrayA for Loop0 (reinit)
+	addi $t9, $0, 0				# $t9 --> print count
 
 LoopStart1:
 	beq $t5, $t4, LoopEnd1
@@ -119,10 +120,9 @@ LoopStart1:
 
 	li $v0, 4					# For print_string service
 
+	addi $t9, $t9, 1			# For updating print count (must be here instead of under LoopUpdate1)
 
-	## TODO: Check against count here to remove extra comma
-
-
+	beq $t9, $t8, LoopUpdate1	# Check print count against count here to remove extra comma at the end
 
 	la $a0, substr2
 	syscall						# ", "
@@ -136,10 +136,10 @@ LoopEnd1:
 	la $a0, substr4
 	syscall						# ")."
 
-	j TerminateProg				# For Else of ZeroMultiples to work
+	j TerminateProg				# For Else of NoMultiples to work
 
-ZeroMultiples:
-	la $a0, zeroMultiplesSubstr0
+NoMultiples:
+	la $a0, noMultiplesSubstr0
 	syscall						# "Zero multiples of "
 
 	li $v0, 1					# For print_int service
@@ -147,7 +147,7 @@ ZeroMultiples:
 	syscall						# "<val of X>"
 
 	li $v0, 4					# For print_string service
-	la $a0, zeroMultiplesSubstr1
+	la $a0, noMultiplesSubstr1
 	syscall						# "."
 
 TerminateProg:
