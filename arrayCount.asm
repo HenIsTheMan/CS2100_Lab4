@@ -58,9 +58,14 @@ LoopStart0:
 
 	and $t6, $t6, $t9			# Bitmasking to get remainder of division by pow of 2
 
-	beq $t6, $0, LoopUpdate0	# No need to set -ve val if $t6 is multiple of X
+	beq $t6, $0, IncrementCount	# No need to set -ve val if $t6 is multiple of X
 
 	sw $t3, 0($t5)				# Replace element that is not a multiple of X with $t3
+
+	j LoopUpdate0				# For Else of IncrementCount to work
+
+IncrementCount:
+	addi $t8, $t8, 1
 
 LoopUpdate0:
 	addi $t5, $t5, 4			# For traversal by ptr
@@ -76,6 +81,8 @@ LoopEnd0:
 	la $t2, countStrArr			# $t2 --> countStrArr
 
 	addi $t7, $t8, 0			# $t7 --> offset for countStrArr (init as $t7 = $t8)
+
+	addi $t7, $t7, -1			# Since 1st element in countStrArr is "One"
 
 	sll $t7, $t7, 2				# Multiply $t7 by 4 to get offset for countStrArr
 
@@ -109,6 +116,12 @@ LoopStart1:
 	syscall						# "<val at $t5>"
 
 	li $v0, 4					# For print_string service
+
+
+	## TODO: Check against count here to remove extra comma
+
+
+
 	la $a0, substr2
 	syscall						# ", "
 
@@ -121,15 +134,15 @@ LoopEnd1:
 	la $a0, substr4
 	syscall						# ")."
 
-	j TerminateProg
+	j TerminateProg				# For Else of ZeroMultiples to work
 
 ZeroMultiples:
 	la $a0, zeroMultiplesSubstr0
-	syscall
+	syscall						# "Zero multiples of "
 
 	li $v0, 1					# For print_int service
 	addi $a0, $t1, 0
-	syscall						# "Zero multiples of "
+	syscall						# "<val of X>"
 
 	li $v0, 4					# For print_string service
 	la $a0, zeroMultiplesSubstr1
