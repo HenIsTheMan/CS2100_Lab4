@@ -46,7 +46,7 @@ main:
 	addi $t1, $v0, 0			# $t1 --> X (return val, assumed to be pow of 2)
 
 	# code for counting multiples of X in arrayA (using a loop)
-	addi $t3, $0, -1			# $t3 --> -ve val to replace non-multiples of X (since arrayA cannot contain -ve vals on init)
+	addi $s1, $0, -1			# $s1 --> -ve val to replace non-multiples of X (since arrayA cannot contain -ve vals on init)
 	addi $t4, $t0, 28			# $t4 --> arrayA + (arrayA length - 1) * 4 (Final address for traversal by ptr)
 	add $t5, $t0, $0			# $t5 --> copy of arrayA for Loop0
 	addi $s0, $t1, -1			# $s0 --> bitmask to get remainder of division by pow of 2
@@ -60,7 +60,7 @@ LoopStart0:
 
 	beq $t6, $0, IncrementCount	# No need to set -ve val if $t6 is multiple of X
 
-	sw $t3, 0($t5)				# Replace element that is not a multiple of X with $t3
+	sw $s1, 0($t5)				# Replace element that is not a multiple of X with $s1
 
 	j LoopUpdate0				# For Else of IncrementCount to work
 
@@ -106,13 +106,14 @@ LoopEnd0:
 	### Printing of 1 or more substr2 and substr3
 	add $t5, $t0, $0			# $t5 --> copy of arrayA for Loop0 (reinit)
 	addi $t9, $0, 0				# $t9 --> print count
+	addi $t3, $t8, -1			# $t3 --> count - 1 (for checking whether to print "and" instead of ", " as last separator)
 
 LoopStart1:
 	beq $t5, $t4, LoopEnd1
 
 	lw $t6, 0($t5)				# $t6 --> current element of arrayA copy
 
-	beq $t6, $t3, LoopUpdate1	# Do not print if -ve val
+	beq $t6, $s1, LoopUpdate1	# Do not print if -ve val
 
 	li $v0, 1					# For print_int service
 	addi $a0, $t6, 0
@@ -122,10 +123,18 @@ LoopStart1:
 
 	addi $t9, $t9, 1			# For updating print count (must be here instead of under LoopUpdate1)
 
-	beq $t9, $t8, LoopUpdate1	# Check print count against count here to remove extra comma at the end
+	beq $t9, $t3, PrintAnd		# Print "and" instead of ", " as last separator
+
+	beq $t9, $t8, LoopUpdate1	# Check print count against count to remove extra comma at the end
 
 	la $a0, substr2
 	syscall						# ", "
+
+	j LoopUpdate1
+
+PrintAnd:
+	la $a0, substr3
+	syscall						# " and "
 
 LoopUpdate1:
 	addi $t5, $t5, 4			# For traversal by ptr
