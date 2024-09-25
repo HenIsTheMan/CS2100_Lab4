@@ -6,15 +6,27 @@ arrayA:
 count:
 	.word 999 # 999 is a dummy val
 
+# Str Size = str length + 1 (extra 1 due to null-termination char)
 countStrArr:
-	.asciiz "One"
-	.asciiz "Two"
-	.asciiz "Three"
-	.asciiz "Four"
-	.asciiz "Five"
-	.asciiz "Six"
-	.asciiz "Seven"
-	.asciiz "Eight"
+	.asciiz "One"		# 4 bytes
+	.asciiz "Two"		# 4 bytes
+	.asciiz "Three"		# 6 bytes
+	.asciiz "Four"		# 5 bytes
+	.asciiz "Five"		# 5 bytes
+	.asciiz "Six"		# 4 bytes
+	.asciiz "Seven"		# 6 bytes
+	.asciiz "Eight"		# 6 bytes
+
+# Str Offset of str is the sum of bytes from all strs before
+countStrOffsetArr:
+	.word 0,
+	.word 4,
+	.word 8,
+	.word 14,
+	.word 19,
+	.word 24,
+	.word 28,
+	.word 34
 
 substr0:
 	.asciiz " multiples of "
@@ -47,7 +59,7 @@ main:
 
 	# code for counting multiples of X in arrayA (using a loop)
 	addi $s1, $0, -1			# $s1 --> -ve val to replace non-multiples of X (since arrayA cannot contain -ve vals on init)
-	addi $t4, $t0, 28			# $t4 --> arrayA + (arrayA length - 1) * 4 (Final address for traversal by ptr)
+	addi $t4, $t0, 32			# $t4 --> arrayA + arrayA length * 4 (Final address + 4 limit for traversal by ptr, 32 instead of 28)
 	add $t5, $t0, $0			# $t5 --> copy of arrayA for Loop0
 	addi $s0, $t1, -1			# $s0 --> bitmask to get remainder of division by pow of 2
 
@@ -79,14 +91,19 @@ LoopEnd0:
 	beq $t8, $0, NoMultiples	# Accts for 0
 
 	la $t2, countStrArr			# $t2 --> countStrArr
+	la $s4, countStrOffsetArr	# $s4 --> countStrOffsetArr
 
-	addi $t7, $t8, 0			# $t7 --> offset for countStrArr (init as $t7 = $t8)
+	addi $t7, $t8, 0			# $t7 --> offset for countStrOffsetArr then offset for countStrArr (init as $t7 = count)
 
-	addi $t7, $t7, -1			# Since 1st element in countStrArr is "One"
+	addi $t7, $t7, -1			# Since need to offset count - 1 times for countStrOffsetArr
 
-	sll $t7, $t7, 2				# Multiply $t7 by 4 to get offset for countStrArr
+	sll $t7, $t7, 2				# Multiply $t7 by 4 to get offset for countStrOffsetArr
 
-	add $t2, $t2, $t7			# Offset countStrArr for correct countStr to be printed
+	add $s4, $s4, $t7			# Offset countStrOffsetArr to get address of correct countStrOffset
+
+	lw $t7, 0($s4)				# $t7 is now offset for countStrArr
+
+	add $t2, $t2, $t7			# Apply offset for countStrArr
 
 	## Printing of 1 or more multiples
 	addi $a0, $t2, 0
