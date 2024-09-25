@@ -1,16 +1,26 @@
 # messages.asm
-  .data 
-str: .asciiz "the answer = "
-  .text
 
-main: 
-    li   $v0, 4    # system call code for print_string
-    la   $a0, str  # address of string to print
-    syscall        # print the string
+.data
 
-    li   $v0, 1    # system call code for print_int
-    li   $a0, 5    # integer to print
-    syscall        # print the integer
-    
-    li   $v0, 10   # system call code for exit
-    syscall        # terminate program
+str:
+	.asciiz "the answer = "
+
+.text
+
+main:
+	jal my_func
+	addi $t0, $v0, 0 # Store return val in $t0
+
+	# Print str to console
+	li $v0, 4
+	la $a0, str
+	syscall
+
+	# Print $t0 to console
+	li $v0, 1
+	addi $a0, $t0, 0
+	syscall
+	
+	# Terminate prog
+	li $v0, 10
+	syscall
