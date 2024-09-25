@@ -1,38 +1,20 @@
 .data 
 
 arrayA:
-	.word 1, 0, 2, 0, 3, 5, 7, 9
+	.word 11, 0, 31, 22, 9, 17, 6, 9
 
 count:
 	.word 999 # 999 is a dummy val
 
-countStr0:
-	.asciiz "One"
-countStr1:
-	.asciiz "Two"
-countStr2:
-	.asciiz "Three"
-countStr3:
-	.asciiz "Four"
-countStr4:
-	.asciiz "Five"
-countStr5:
-	.asciiz "Six"
-countStr6:
-	.asciiz "Seven"
-countStr7:
-	.asciiz "Eight"
-
 countStrArr:
-	.word,
-	countStr0,
-	countStr1,
-	countStr2,
-	countStr3,
-	countStr4,
-	countStr5,
-	countStr6,
-	countStr7
+	.asciiz "One"
+	.asciiz "Two"
+	.asciiz "Three"
+	.asciiz "Four"
+	.asciiz "Five"
+	.asciiz "Six"
+	.asciiz "Seven"
+	.asciiz "Eight"
 
 substr0:
 	.asciiz " multiples of "
@@ -52,83 +34,92 @@ zeroMultiplesSubstr1:
 
 .text
 
-# $t0 --> arrayA
-# $t1 --> X (assumed to be pow of 2)
-# $t2 --> countStrArr
-# $t3 --> loop var 0
-# $t4 --> arrayA + (arrayA length - 1) * 4 (For traversal by ptr)
-# $t5 --> copy of arrayA for Loop0
-# $t6 --> current element of copy of arrayA in Loop0
-# $t7 --> loop var 1
-# $t8 --> count
-# $t9 --> bitmask to get remainder of division by pow of 2
-
 main:
 	# code to setup the variable mappings
-	la $t0, arrayA		# $t0 --> arrayA
-	la $t8, count		# $t8 --> count
+	la $t0, arrayA				# $t0 --> arrayA
+	la $t8, count				# $t8 --> count
+	add $t8, $0, $0				# Set count to 0 (count not 0 at the start by qn restrictions)
 
 	# code for reading in the user value X
-    li $v0, 5			# 5 is system call code for read_int
-	syscall				# $v0 now has int from console input
-	addi $t1, $v0, 0	# Store return val in $t1
+    li $v0, 5					# read_int
+	syscall						# $v0 now has int from console input
+	addi $t1, $v0, 0			# $t1 --> X (return val, assumed to be pow of 2)
 
 	# code for counting multiples of X in arrayA (using a loop)
-	add $t8, $0, $0		# Set count to 0 (count not 0 at the start by qn restrictions)
-	addi $t4, $t0, 28	# Since arrayA length is fixed at 8
-	add $t5, $t0, $0	# $t5 --> copy of arrayA for Loop0
-	addi $t9, $t1, -1	# $t9 --> bitmask to get remainder of division by pow of 2
+	addi $t3, $0, -1			# $t3 --> -ve val to replace non-multiples of X (since arrayA cannot contain -ve vals on init)
+	addi $t4, $t0, 28			# $t4 --> arrayA + (arrayA length - 1) * 4 (Final address for traversal by ptr)
+	add $t5, $t0, $0			# $t5 --> copy of arrayA for Loop0
+	addi $t9, $t1, -1			# $t9 --> bitmask to get remainder of division by pow of 2
 
 LoopStart0:
-	beq $t3, $t4, LoopEnd0
+	beq $t5, $t4, LoopEnd0
 
-	lw $t6, 0($t5)
+	lw $t6, 0($t5)				# $t6 --> current element of copy of arrayA in Loop0
 
-	## Bitmasking to get remainder of division by pow of 2
-	and $t6, $t6, $t9
+	and $t6, $t6, $t9			# Bitmasking to get remainder of division by pow of 2
 
-	addi $t3, $t3, 4 # For traversal by ptr
+	beq $t6, $0, LoopUpdate0	# No need to set -ve val if $t6 is multiple of X
+
+	sw $t3, 0($t5)				# Replace element that is not a multiple of X with $t3
+
+LoopUpdate0:
+	addi $t5, $t5, 4			# For traversal by ptr
+
+	j LoopStart0
 
 LoopEnd0:
 	# code for printing result
-	li $v0, 4 # For print_string service
+	li $v0, 4					# For print_string service
 
-	beq $t8, $0, ZeroMultiples # Acct for 0
+	beq $t8, $0, ZeroMultiples	# Accts for 0
 
-	la $t2, countStrArr # $t2 --> countStrArr
+	la $t2, countStrArr			# $t2 --> countStrArr
 
-	## Loop to get correct address and correct countStr
-	addi $t7, $0, 1 # Start with 1 since 0 was accted for
+	addi $t7, $t8, 0			# $t7 --> offset for countStrArr (init as $t7 = $t8)
+
+	sll $t7, $t7, 2				# Multiply $t7 by 4 to get offset for countStrArr
+
+	add $t2, $t2, $t7			# Offset countStrArr for correct countStr to be printed
+
+	## Logic for printing non-0 multiples
+	addi $a0, $t2, 0
+	syscall						# "One" - "Eight"
+
+	la $a0, substr0
+	syscall						# " multiples of "
+
+	li $v0, 1					# For print_int service
+	addi $a0, $t1, 0
+	syscall						# "<val of X>"
+
+	li $v0, 4					# For print_string service
+	la $a0, substr1
+	syscall						# " ("
+
+	### Printing of 1 or more substr2 and substr3
+	add $t5, $t0, $0			# $t5 --> copy of arrayA for Loop0 (reinit)
 
 LoopStart1:
-	beq $t7, $t8, LoopEnd1
+	beq $t5, $t4, LoopEnd1
 
-	addi $t2, $t2, 4
+	beq $t5, $t3, LoopUpdate1	# Do not print if -ve val
 
-	addi $t7, $t7, 1
+	li $v0, 1					# For print_int service
+	addi $a0, $t5, 0
+	syscall						# "<val at $t5>"
+
+	li $v0, 4					# For print_string service
+	la $a0, substr2
+	syscall						# ", "
+
+LoopUpdate1:
+	addi $t5, $t5, 4			# For traversal by ptr
 
 	j LoopStart1
 
 LoopEnd1:
-	## Logic for printing non-0 multiples
-	addi $a0, $t2, 0
-	syscall
-
-	la $a0, substr0
-	syscall
-
-	li $v0, 1 # For print_int service
-	addi $a0, $t1, 0
-	syscall
-
-	li $v0, 4 # For print_string service
-	la $a0, substr1
-	syscall
-
-	### TODO: use substr2 and substr3 here, must switch between services too
-
 	la $a0, substr4
-	syscall
+	syscall						# ")."
 
 	j TerminateProg
 
@@ -136,13 +127,13 @@ ZeroMultiples:
 	la $a0, zeroMultiplesSubstr0
 	syscall
 
-	li $v0, 1 # For print_int service
+	li $v0, 1					# For print_int service
 	addi $a0, $t1, 0
-	syscall
+	syscall						# "Zero multiples of "
 
-	li $v0, 4 # For print_string service
+	li $v0, 4					# For print_string service
 	la $a0, zeroMultiplesSubstr1
-	syscall
+	syscall						# "."
 
 TerminateProg:
 	li $v0, 10
