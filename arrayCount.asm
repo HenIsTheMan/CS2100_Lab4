@@ -114,7 +114,7 @@ LoopStart1:
 	beq $t6, $t3, LoopUpdate1	# Do not print if -ve val
 
 	li $v0, 1					# For print_int service
-	addi $a0, $t5, 0
+	addi $a0, $t6, 0
 	syscall						# "<val at $t5>"
 
 	li $v0, 4					# For print_string service
