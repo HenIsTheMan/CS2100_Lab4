@@ -1,0 +1,15 @@
+arrayA is at 0x10010000
+
+count is at 0x10010014
+
+arrayA: .word 1, 0, 2, 0, 3, 5, 7, 9
+
+To map arrayA: la $t0, arrayA
+
+To map count: la $t8, count
+
+(0000 0000 0001 1111) If X is 32: andi $t4, $t3, 0x001F
+
+(0000 0000 0000 0111) If X is 8: andi $t4, $t3, 0x0007
+
+addi $t5, $t8, -1
